@@ -1,119 +1,138 @@
+/**
+ * Store de autenticación con Zustand
+ * Maneja el estado global de autenticación
+ */
+
 import { create } from 'zustand';
-import { User, AuthTokens, LoginCredentials, RegisterData } from '../types';
-import api from '../config/axios';
+import { persist } from 'zustand/middleware';
+import type { User, LoginDTO, RegisterDTO, ApiError } from '@/types/api.types';
+import * as authService from '@/services/auth.service';
 
 interface AuthState {
+  // Estado
   user: User | null;
-  accessToken: string | null;
-  refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  error: string | null;
-  
-  // Actions
-  login: (credentials: LoginCredentials) => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
-  logout: () => void;
-  loadUser: () => void;
+  error: ApiError | null;
+
+  // Acciones
+  login: (credentials: LoginDTO) => Promise<void>;
+  register: (data: RegisterDTO) => Promise<void>;
+  logout: () => Promise<void>;
+  updateUser: (user: User) => void;
   clearError: () => void;
+  checkAuth: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  accessToken: localStorage.getItem('accessToken'),
-  refreshToken: localStorage.getItem('refreshToken'),
-  isAuthenticated: !!localStorage.getItem('accessToken'),
-  isLoading: false,
-  error: null,
-
-  login: async (credentials: LoginCredentials) => {
-    try {
-      set({ isLoading: true, error: null });
-
-      const response = await api.post('/auth/login', credentials);
-      const { user, accessToken, refreshToken } = response.data.data;
-
-      // Guardar en localStorage
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('user', JSON.stringify(user));
-
-      set({
-        user,
-        accessToken,
-        refreshToken,
-        isAuthenticated: true,
-        isLoading: false,
-      });
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Error al iniciar sesión';
-      set({ error: errorMessage, isLoading: false });
-      throw error;
-    }
-  },
-
-  register: async (data: RegisterData) => {
-    try {
-      set({ isLoading: true, error: null });
-
-      const response = await api.post('/auth/register', data);
-      const { user, accessToken, refreshToken } = response.data.data;
-
-      // Guardar en localStorage
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('user', JSON.stringify(user));
-
-      set({
-        user,
-        accessToken,
-        refreshToken,
-        isAuthenticated: true,
-        isLoading: false,
-      });
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Error al registrarse';
-      set({ error: errorMessage, isLoading: false });
-      throw error;
-    }
-  },
-
-  logout: () => {
-    // Limpiar localStorage
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
-
-    set({
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      // Estado inicial
       user: null,
-      accessToken: null,
-      refreshToken: null,
       isAuthenticated: false,
-    });
-  },
+      isLoading: false,
+      error: null,
 
-  loadUser: () => {
-    const userStr = localStorage.getItem('user');
-    const accessToken = localStorage.getItem('accessToken');
-    const refreshToken = localStorage.getItem('refreshToken');
+      // Login
+      login: async (credentials: LoginDTO) => {
+        set({ isLoading: true, error: null });
 
-    if (userStr && accessToken) {
-      try {
-        const user = JSON.parse(userStr);
+        try {
+          const response = await authService.login(credentials);
+
+          set({
+            user: response.user,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+          });
+        } catch (error) {
+          set({
+            isLoading: false,
+            error: error as ApiError,
+            isAuthenticated: false,
+            user: null,
+          });
+          throw error;
+        }
+      },
+
+      // Registro
+      register: async (data: RegisterDTO) => {
+        set({ isLoading: true, error: null });
+
+        try {
+          const response = await authService.register(data);
+
+          set({
+            user: response.user,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+          });
+        } catch (error) {
+          set({
+            isLoading: false,
+            error: error as ApiError,
+            isAuthenticated: false,
+            user: null,
+          });
+          throw error;
+        }
+      },
+
+      // Logout
+      logout: async () => {
+        set({ isLoading: true });
+
+        try {
+          await authService.logout();
+        } catch (error) {
+          console.error('Error en logout:', error);
+        } finally {
+          set({
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+            error: null,
+          });
+        }
+      },
+
+      // Actualizar usuario
+      updateUser: (user: User) => {
+        set({ user });
+        authService.updateLocalUser(user);
+      },
+
+      // Limpiar error
+      clearError: () => {
+        set({ error: null });
+      },
+
+      // Verificar autenticación (al cargar la app)
+      checkAuth: () => {
+        const isAuth = authService.isAuthenticated();
+        const user = authService.getCurrentUser();
+
         set({
-          user,
-          accessToken,
-          refreshToken,
-          isAuthenticated: true,
+          isAuthenticated: isAuth,
+          user: isAuth ? user : null,
         });
-      } catch (error) {
-        // Si hay error al parsear, limpiar todo
-        localStorage.removeItem('user');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-      }
+      },
+    }),
+    {
+      name: 'auth-storage',
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+      }),
     }
-  },
+  )
+);
 
-  clearError: () => set({ error: null }),
-}));
+// Hook para obtener solo el usuario
+export const useUser = () => useAuthStore((state) => state.user);
+
+// Hook para obtener solo isAuthenticated
+export const useIsAuthenticated = () => useAuthStore((state) => state.isAuthenticated);

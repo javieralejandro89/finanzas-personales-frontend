@@ -38,7 +38,7 @@ const Login = () => {
 
       {error && (
         <div className="mb-4 p-3 bg-danger-50 border border-danger-200 text-danger-700 rounded-lg text-sm">
-          {error}
+          {error.message || 'An error occurred'}
         </div>
       )}
 

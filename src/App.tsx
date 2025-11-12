@@ -1,129 +1,52 @@
-import { useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Auth/Login';
+import Dashboard from './pages/Dashboard/Dashboard';
 import { useAuthStore } from './store/authStore';
 
-// Layout
-import Layout from './components/Layout/Layout';
-import AuthLayout from './components/Layout/AuthLayout';
-
-// Pages
-import Login from './pages/Auth/Login';
-import Register from './pages/Auth/Register';
-import Dashboard from './pages/Dashboard/Dashboard';
-import Transactions from './pages/Transactions/Transactions';
-import Categories from './pages/Categories/Categories';
-import Accounts from './pages/Accounts/Accounts';
-
-// Protected Route Component
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-
+  
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-
+  
   return <>{children}</>;
-};
-
-// Public Route Component (redirect if authenticated)
-const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  return <>{children}</>;
-};
+}
 
 function App() {
-  const loadUser = useAuthStore((state) => state.loadUser);
-
-  useEffect(() => {
-    // Cargar usuario desde localStorage al iniciar la app
-    loadUser();
-  }, [loadUser]);
-
   return (
-    <Routes>
-      {/* Rutas públicas */}
-      <Route
-        path="/login"
-        element={
-          <PublicRoute>
-            <AuthLayout>
-              <Login />
-            </AuthLayout>
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <PublicRoute>
-            <AuthLayout>
-              <Register />
-            </AuthLayout>
-          </PublicRoute>
-        }
-      />
+    <BrowserRouter>
+      <Routes>
+        {/* Auth Routes */}
+        <Route
+          path="/login"
+          element={
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+              <div className="w-full max-w-md">
+                <div className="card">
+                  <div className="card-body">
+                    <Login />
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        />
 
-      {/* Rutas protegidas */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Layout>
+        {/* Protected Routes */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
               <Dashboard />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/transactions"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Transactions />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/categories"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Categories />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/accounts"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Accounts />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Redirect root to dashboard or login */}
-      <Route
-        path="/"
-        element={
-          <Navigate
-            to={useAuthStore.getState().isAuthenticated ? '/dashboard' : '/login'}
-            replace
-          />
-        }
-      />
-
-      {/* 404 - Not Found */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* Default Route */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
