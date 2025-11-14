@@ -144,64 +144,86 @@ export default function MonthlyTrendsChart() {
   };
 
   return (
-    <div className="card">
-      <div className="card-body">
-        <div className="flex items-center justify-between mb-4">
+  <div className="card hover:shadow-lg transition-shadow">
+    <div className="card-body">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+            <svg className="w-5 h-5 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+            </svg>
+          </div>
           <h3 className="text-lg font-semibold text-gray-900">
             Tendencias Mensuales
           </h3>
-          <span className="text-sm text-gray-500">
-            Últimos {monthlyTrends.length} meses
-          </span>
         </div>
+        <span className="badge badge-info text-xs">
+          Últimos {monthlyTrends.length} meses
+        </span>
+      </div>
 
-        <div className="h-80">
-          <Line data={chartData} options={options} />
-        </div>
+      <div className="h-80 mb-6">
+        <Line data={chartData} options={options} />
+      </div>
 
-        {/* Stats Summary */}
-        <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-200">
-          {monthlyTrends.length > 0 && (
-            <>
-              <div className="text-center">
-                <p className="text-sm text-gray-600 mb-1">Ingreso Promedio</p>
-                <p className="text-lg font-semibold text-success-600">
-                  {formatMoneyCompact(
-                    monthlyTrends.reduce(
-                      (sum, trend) => sum + parseFloat(trend.income),
-                      0
-                    ) / monthlyTrends.length
-                  )}
-                </p>
+      {/* Stats Summary - Mejorado */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-gray-200">
+        {monthlyTrends.length > 0 && (
+          <>
+            <div className="text-center p-4 rounded-lg bg-success-50 hover:bg-success-100 transition-colors">
+  <div className="flex items-center justify-center gap-2 mb-1">
+    <svg className="w-4 h-4 text-success-600" fill="currentColor" viewBox="0 0 20 20">
+      <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+    </svg>
+    <p className="text-xs font-semibold text-success-700 uppercase tracking-wide">Ingreso Promedio</p>
+  </div>
+  <p className="text-xl font-bold text-success-600">
+    {formatMoneyCompact(
+      monthlyTrends.reduce(
+        (sum, trend) => sum + parseFloat(trend.income),
+        0
+      ) / monthlyTrends.length
+    )}
+  </p>
+</div>
+
+            <div className="text-center p-4 rounded-lg bg-danger-50 hover:bg-danger-100 transition-colors">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <svg className="w-4 h-4 text-danger-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clipRule="evenodd" />
+                </svg>
+                <p className="text-xs font-semibold text-danger-700 uppercase tracking-wide">Gasto Promedio</p>
               </div>
+              <p className="text-xl font-bold text-danger-600">
+                {formatMoneyCompact(
+                  monthlyTrends.reduce(
+                    (sum, trend) => sum + parseFloat(trend.expenses),
+                    0
+                  ) / monthlyTrends.length
+                )}
+              </p>
+            </div>
 
-              <div className="text-center">
-                <p className="text-sm text-gray-600 mb-1">Gasto Promedio</p>
-                <p className="text-lg font-semibold text-danger-600">
-                  {formatMoneyCompact(
-                    monthlyTrends.reduce(
-                      (sum, trend) => sum + parseFloat(trend.expenses),
-                      0
-                    ) / monthlyTrends.length
-                  )}
-                </p>
+            <div className="text-center p-4 rounded-lg bg-primary-50 hover:bg-primary-100 transition-colors">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <svg className="w-4 h-4 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clipRule="evenodd" />
+                </svg>
+                <p className="text-xs font-semibold text-primary-700 uppercase tracking-wide">Balance Promedio</p>
               </div>
-
-              <div className="text-center">
-                <p className="text-sm text-gray-600 mb-1">Balance Promedio</p>
-                <p className="text-lg font-semibold text-primary-600">
-                  {formatMoneyCompact(
-                    monthlyTrends.reduce(
-                      (sum, trend) => sum + parseFloat(trend.balance),
-                      0
-                    ) / monthlyTrends.length
-                  )}
-                </p>
-              </div>
-            </>
-          )}
-        </div>
+              <p className="text-xl font-bold text-primary-600">
+                {formatMoneyCompact(
+                  monthlyTrends.reduce(
+                    (sum, trend) => sum + parseFloat(trend.balance),
+                    0
+                  ) / monthlyTrends.length
+                )}
+              </p>
+            </div>
+          </>
+        )}
       </div>
     </div>
-  );
+  </div>
+);
 }

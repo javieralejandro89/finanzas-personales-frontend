@@ -20,22 +20,24 @@ export default function Dashboard() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="card max-w-md w-full">
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="card max-w-md w-full shadow-lg animate-slide-up">
           <div className="card-body text-center">
-            <svg
-              className="w-16 h-16 mx-auto mb-4 text-danger-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <div className="w-16 h-16 bg-danger-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg
+                className="w-8 h-8 text-danger-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               Error al cargar datos
             </h3>
@@ -53,14 +55,17 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+    <div className="space-y-6">
+      {/* Header con gradiente */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 p-6 sm:p-8 shadow-lg">
+        <div className="absolute inset-0 bg-black/5"></div>
+        <div className="relative">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-              <p className="text-sm text-gray-600">
+              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
+                Dashboard
+              </h1>
+              <p className="text-primary-100 text-sm sm:text-base">
                 Bienvenido, {user?.name} • {currentMonthLabel}
               </p>
             </div>
@@ -68,10 +73,10 @@ export default function Dashboard() {
             <button
               onClick={() => loadDashboard()}
               disabled={isLoading}
-              className="btn btn-outline btn-sm flex items-center gap-2"
+              className="btn bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20 transition-all duration-200"
             >
               <svg
-                className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`}
+                className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -87,45 +92,57 @@ export default function Dashboard() {
             </button>
           </div>
         </div>
+        
+        {/* Decoración */}
+        <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
+        <div className="absolute -left-8 -bottom-8 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-6">
-          {/* Date Filter */}
-          <DateFilter />
+      {/* Date Filter */}
+      <div className="animate-fade-in">
+        <DateFilter />
+      </div>
 
-          {/* Loading State */}
-          {isLoading && (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <div className="spinner w-12 h-12 border-4 mx-auto mb-4"></div>
-                <p className="text-gray-600">Cargando datos financieros...</p>
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="relative">
+              <div className="spinner w-16 h-16 border-4 mx-auto mb-4 border-primary-200 border-t-primary-600"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-8 h-8 bg-primary-600 rounded-full animate-pulse"></div>
               </div>
             </div>
-          )}
-
-          {/* Dashboard Content */}
-          {!isLoading && (
-            <>
-              {/* Financial Summary Cards */}
-              <FinancialSummaryCard />
-
-              {/* Charts Grid */}
-              <div className="grid grid-cols-1 gap-6">
-                {/* Category Breakdown */}
-                <CategoryBreakdownChart />
-
-                {/* Monthly Trends */}
-                <MonthlyTrendsChart />
-
-                {/* Recent Transactions */}
-                <RecentTransactionsList />
-              </div>
-            </>
-          )}
+            <p className="text-gray-600 font-medium">Cargando datos financieros...</p>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Dashboard Content */}
+      {!isLoading && (
+        <div className="space-y-6 animate-fade-in">
+          {/* Financial Summary Cards */}
+          <FinancialSummaryCard />
+
+          {/* Charts Grid - Responsive */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            {/* Category Breakdown */}
+            <div className="xl:col-span-2">
+              <CategoryBreakdownChart />
+            </div>
+
+            {/* Monthly Trends */}
+            <div className="xl:col-span-2">
+              <MonthlyTrendsChart />
+            </div>
+
+            {/* Recent Transactions */}
+            <div className="xl:col-span-2">
+              <RecentTransactionsList />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

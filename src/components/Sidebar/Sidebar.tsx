@@ -44,77 +44,95 @@ const Sidebar = () => {
   ];
 
   return (
-    <>
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-lg text-gray-700 hover:bg-gray-100"
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          {isOpen ? (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          ) : (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          )}
-        </svg>
-      </button>
+  <>
+    {/* Mobile Menu Button - Mejorado */}
+    <button
+      onClick={() => setIsOpen(!isOpen)}
+      className="lg:hidden fixed top-4 left-4 z-50 p-2.5 rounded-xl bg-white shadow-lg text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all hover:scale-105 active:scale-95"
+    >
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+        {isOpen ? (
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+        ) : (
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        )}
+      </svg>
+    </button>
 
-      {/* Overlay para móvil */}
-      {isOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
+    {/* Overlay para móvil - Mejorado */}
+    {isOpen && (
+      <div
+        className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-30 animate-fade-in"
+        onClick={() => setIsOpen(false)}
+      />
+    )}
 
-      {/* Sidebar */}
-      <aside
-        className={`
-          fixed lg:static inset-y-0 left-0 z-40
-          w-64 bg-white shadow-xl border-r border-gray-200
-          transform transition-transform duration-300 ease-in-out
-          ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        `}
-      >
-        {/* Logo */}
-        <div className="h-16 flex items-center justify-center border-b border-gray-200 px-4">
-          <h1 className="text-xl font-bold text-primary-600 flex items-center gap-2">
+    {/* Sidebar - Mejorado */}
+    <aside
+      className={`
+        fixed lg:static inset-y-0 left-0 z-40
+        w-64 bg-gradient-to-b from-white to-gray-50 shadow-2xl border-r border-gray-200
+        transform transition-all duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+      `}
+    >
+      {/* Logo - Mejorado */}
+      <div className="h-16 flex items-center justify-center border-b border-gray-200 px-4 bg-gradient-to-r from-primary-600 to-primary-700">
+        <div className="flex items-center gap-3 group cursor-pointer">
+          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
             <span className="text-2xl">💰</span>
-            <span>Finanzas</span>
-          </h1>
-        </div>
-
-        {/* Navigation */}
-        <nav className="p-4 space-y-1">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              onClick={() => setIsOpen(false)}
-              className={({ isActive }) =>
-                `flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                  isActive
-                    ? 'bg-primary-50 text-primary-700 font-semibold shadow-sm'
-                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                }`
-              }
-            >
-              <span className="flex-shrink-0">{item.icon}</span>
-              <span className="text-sm">{item.name}</span>
-            </NavLink>
-          ))}
-        </nav>
-
-        {/* Footer */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-          <div className="text-xs text-gray-500 text-center">
-            <p className="font-medium">Versión 1.0.0</p>
-            <p className="mt-1">© 2024 Finanzas App</p>
           </div>
+          <h1 className="text-xl font-bold text-white">Finanzas</h1>
         </div>
-      </aside>
-    </>
-  );
+      </div>
+
+      {/* Navigation - Mejorado */}
+      <nav className="p-4 space-y-2">
+        {navItems.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            onClick={() => setIsOpen(false)}
+            className={({ isActive }) =>
+              `group flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                isActive
+                  ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-lg shadow-primary-500/30 scale-105'
+                  : 'text-gray-700 hover:bg-primary-50 hover:text-primary-700 hover:scale-105 active:scale-95'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <div className={`flex-shrink-0 transition-transform group-hover:scale-110 ${
+                  isActive ? 'text-white' : 'text-gray-500 group-hover:text-primary-600'
+                }`}>
+                  {item.icon}
+                </div>
+                <span className="text-sm font-medium">{item.name}</span>
+                {isActive && (
+                  <div className="ml-auto w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                )}
+              </>
+            )}
+          </NavLink>
+        ))}
+      </nav>
+      
+
+      {/* Footer - Mejorado */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
+        <div className="text-center space-y-2">
+          <div className="flex items-center justify-center gap-2">
+            <div className="w-2 h-2 bg-success-500 rounded-full animate-pulse"></div>
+            <p className="text-xs font-semibold text-gray-700">Sistema Activo</p>
+          </div>
+          <p className="text-xs text-gray-500">Versión 1.0.0</p>
+          <p className="text-xs text-gray-400">© 2024 Finanzas App</p>
+        </div>
+      </div>
+    </aside>
+  </>
+);
 };
 
 export default Sidebar;

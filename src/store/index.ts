@@ -10,3 +10,6 @@ export * from './dashboardStore';
 
 // Categories Store
 export * from './categoriesStore';
+
+// Transactions Store
+export * from './transactionsStore';

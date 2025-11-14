@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 
 const Login = () => {
@@ -30,6 +30,9 @@ const Login = () => {
     }
   };
 
+  const location = useLocation();
+  const successMessage = location.state?.message;
+
   return (
     <div>
       <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
@@ -41,6 +44,12 @@ const Login = () => {
           {error.message || 'An error occurred'}
         </div>
       )}
+
+      {successMessage && (
+        <div className="mb-4 p-3 bg-success-50 border border-success-200 rounded-lg">
+          <p className="text-sm text-success-700">{successMessage}</p>
+        </div>
+     )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>

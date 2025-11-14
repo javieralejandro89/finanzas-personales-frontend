@@ -1,154 +1,262 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../../store/authStore';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { registerSchema, type RegisterFormInput } from '@/schemas/authSchemas';
+import PasswordStrengthIndicator from '@/components/Auth/PasswordStrengthIndicator';
+import Toast from '@/components/UI/Toast';
+import * as authService from '@/services/auth.service';
+import type { ApiError } from '@/types/api.types';
 
 const Register = () => {
   const navigate = useNavigate();
-  const { register, isLoading, error, clearError } = useAuthStore();
-
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  
+  // Toast state
+  const [toast, setToast] = useState({
+    isOpen: false,
+    message: '',
+    type: 'success' as 'success' | 'error',
   });
 
-  const [passwordError, setPasswordError] = useState('');
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<RegisterFormInput>({
+    resolver: zodResolver(registerSchema),
+    mode: 'onChange',
+  });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-    clearError();
-    setPasswordError('');
-  };
+  const password = watch('password', '');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validar contraseñas
-    if (formData.password !== formData.confirmPassword) {
-      setPasswordError('Las contraseñas no coinciden');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setPasswordError('La contraseña debe tener al menos 6 caracteres');
-      return;
-    }
+  const onSubmit = async (data: RegisterFormInput) => {
+    setIsLoading(true);
+    setApiError(null);
+    setFieldErrors({});
 
     try {
-      await register({
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
+      await authService.register({
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        currency: 'MXN',
       });
-      navigate('/dashboard');
+
+      // Mostrar toast de éxito
+      setToast({
+        isOpen: true,
+        message: '¡Cuenta creada exitosamente! Redirigiendo al login...',
+        type: 'success',
+      });
+
+      // Redirigir al login después de 2 segundos
+      setTimeout(() => {
+        navigate('/login', {
+          state: { message: 'Cuenta creada exitosamente. Por favor inicia sesión.' },
+        });
+      }, 2000);
     } catch (error) {
-      // Error ya manejado en el store
+      const apiErr = error as ApiError;
+      
+      // Manejar errores del backend
+      if (apiErr.errors) {
+        // Errores de validación específicos por campo
+        const backendErrors: Record<string, string> = {};
+        Object.entries(apiErr.errors).forEach(([field, messages]) => {
+          backendErrors[field] = messages[0]; // Tomar el primer error
+        });
+        setFieldErrors(backendErrors);
+      } else {
+        // Error general
+        setApiError(apiErr.message || 'Error al crear la cuenta');
+        setToast({
+          isOpen: true,
+          message: apiErr.message || 'Error al crear la cuenta',
+          type: 'error',
+        });
+      }
+      setIsLoading(false);
     }
   };
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-        Crear Cuenta
-      </h2>
+    <>
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2 text-center">
+          Crear Cuenta
+        </h2>
+        <p className="text-sm text-gray-600 mb-6 text-center">
+          Únete y comienza a gestionar tus finanzas
+        </p>
 
-      {error && (
-        <div className="mb-4 p-3 bg-danger-50 border border-danger-200 text-danger-700 rounded-lg text-sm">
-          {error}
+        {/* Error general del API */}
+        {apiError && (
+          <div className="mb-4 p-3 bg-danger-50 border border-danger-200 rounded-lg">
+            <p className="text-sm text-danger-700">{apiError}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Nombre */}
+          <div>
+            <label htmlFor="name" className="label">
+              Nombre Completo <span className="text-danger-600">*</span>
+            </label>
+            <input
+              type="text"
+              id="name"
+              {...register('name')}
+              className={`input ${errors.name || fieldErrors.name ? 'input-error' : ''}`}
+              placeholder="Juan Pérez"
+              disabled={isLoading}
+            />
+            {(errors.name || fieldErrors.name) && (
+              <p className="error-message">
+                {errors.name?.message || fieldErrors.name}
+              </p>
+            )}
+          </div>
+
+          {/* Email */}
+          <div>
+            <label htmlFor="email" className="label">
+              Correo Electrónico <span className="text-danger-600">*</span>
+            </label>
+            <input
+              type="email"
+              id="email"
+              {...register('email')}
+              className={`input ${errors.email || fieldErrors.email ? 'input-error' : ''}`}
+              placeholder="tu@email.com"
+              disabled={isLoading}
+            />
+            {(errors.email || fieldErrors.email) && (
+              <p className="error-message">
+                {errors.email?.message || fieldErrors.email}
+              </p>
+            )}
+          </div>
+
+          {/* Contraseña */}
+          <div>
+            <label htmlFor="password" className="label">
+              Contraseña <span className="text-danger-600">*</span>
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                {...register('password')}
+                className={`input pr-10 ${errors.password || fieldErrors.password ? 'input-error' : ''}`}
+                placeholder="••••••••"
+                disabled={isLoading}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                )}
+              </button>
+            </div>
+            {(errors.password || fieldErrors.password) && (
+              <p className="error-message">
+                {errors.password?.message || fieldErrors.password}
+              </p>
+            )}
+
+            {/* Indicador de fortaleza */}
+            <PasswordStrengthIndicator password={password} show={!!password} />
+          </div>
+
+          {/* Confirmar Contraseña */}
+          <div>
+            <label htmlFor="confirmPassword" className="label">
+              Confirmar Contraseña <span className="text-danger-600">*</span>
+            </label>
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                id="confirmPassword"
+                {...register('confirmPassword')}
+                className={`input pr-10 ${errors.confirmPassword ? 'input-error' : ''}`}
+                placeholder="••••••••"
+                disabled={isLoading}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showConfirmPassword ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                )}
+              </button>
+            </div>
+            {errors.confirmPassword && (
+              <p className="error-message">{errors.confirmPassword.message}</p>
+            )}
+          </div>
+
+          {/* Botón Submit */}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full btn btn-primary"
+          >
+            {isLoading ? (
+              <>
+                <span className="spinner mr-2"></span>
+                Creando cuenta...
+              </>
+            ) : (
+              'Crear Cuenta'
+            )}
+          </button>
+        </form>
+
+        {/* Link a Login */}
+        <div className="mt-6 text-center text-sm text-gray-600">
+          ¿Ya tienes una cuenta?{' '}
+          <Link
+            to="/login"
+            className="text-primary-600 hover:text-primary-700 font-medium"
+          >
+            Inicia sesión aquí
+          </Link>
         </div>
-      )}
-
-      {passwordError && (
-        <div className="mb-4 p-3 bg-danger-50 border border-danger-200 text-danger-700 rounded-lg text-sm">
-          {passwordError}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="name" className="label">
-            Nombre Completo
-          </label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            className="input"
-            placeholder="Juan Pérez"
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="email" className="label">
-            Correo Electrónico
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className="input"
-            placeholder="tu@email.com"
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="password" className="label">
-            Contraseña
-          </label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            className="input"
-            placeholder="••••••••"
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="confirmPassword" className="label">
-            Confirmar Contraseña
-          </label>
-          <input
-            type="password"
-            id="confirmPassword"
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            className="input"
-            placeholder="••••••••"
-            required
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isLoading ? 'Creando cuenta...' : 'Crear Cuenta'}
-        </button>
-      </form>
-
-      <div className="mt-6 text-center text-sm text-gray-600">
-        ¿Ya tienes una cuenta?{' '}
-        <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
-          Inicia sesión aquí
-        </Link>
       </div>
-    </div>
+
+      {/* Toast de notificación */}
+      <Toast
+        isOpen={toast.isOpen}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, isOpen: false })}
+      />
+    </>
   );
 };
 
