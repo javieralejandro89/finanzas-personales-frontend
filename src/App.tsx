@@ -4,6 +4,8 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import { useAuthStore } from './store/authStore';
 import Categories from './pages/Categories/Categories';
 import Transactions from './pages/Transactions/Transactions';
+import Profile from './pages/Profile/Profile';
+import Settings from './pages/Settings/Settings';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -61,7 +63,25 @@ function App() {
               <Transactions />
             </ProtectedRoute>
           }
-        />  
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Default Route */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
